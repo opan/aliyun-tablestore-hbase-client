@@ -7,17 +7,28 @@ import com.alicloud.tablestore.adaptor.struct.OTableDescriptor;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.*;
 import org.apache.hadoop.hbase.client.Admin;
+import org.apache.hadoop.hbase.client.CompactType;
+import org.apache.hadoop.hbase.client.CompactionState;
 import org.apache.hadoop.hbase.client.Connection;
+import org.apache.hadoop.hbase.client.LogEntry;
+import org.apache.hadoop.hbase.client.SnapshotDescription;
+import org.apache.hadoop.hbase.client.TableDescriptor;
 import org.apache.hadoop.hbase.client.security.SecurityCapability;
 import org.apache.hadoop.hbase.ipc.CoprocessorRpcChannel;
 import org.apache.hadoop.hbase.protobuf.generated.AdminProtos;
 import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos;
-import org.apache.hadoop.hbase.protobuf.generated.MasterProtos;
+import org.apache.hadoop.hbase.protobuf.generated.AccessControlProtos.GetUserPermissionsRequest;
+import org.apache.hadoop.hbase.protobuf.generated.AccessControlProtos.UserPermission;
 import org.apache.hadoop.hbase.quotas.QuotaFilter;
 import org.apache.hadoop.hbase.quotas.QuotaRetriever;
 import org.apache.hadoop.hbase.quotas.QuotaSettings;
+import org.apache.hadoop.hbase.quotas.SpaceQuotaSnapshotView;
+import org.apache.hadoop.hbase.security.access.Permission;
 import org.apache.hadoop.hbase.util.Pair;
-import org.mortbay.log.Log;
+// import org.mortbay.log.Log;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 import java.io.IOException;
 import java.util.*;
@@ -27,6 +38,8 @@ import java.util.regex.Pattern;
 
 public class TablestoreAdmin implements Admin {
     private static final Map<Configuration, TablestoreClientConf> globalTablestoreConfs = new HashMap<Configuration, TablestoreClientConf>();
+
+    private static final Logger log = LoggerFactory.getLogger(TablestoreAdmin.class);
 
     private final Set<TableName> disabledTables;
     private final TablestoreConnection connection;
@@ -63,6 +76,14 @@ public class TablestoreAdmin implements Admin {
     public boolean tableExists(TableName tableName) throws IOException {
         Preconditions.checkNotNull(tableName);
         return this.tablestoreAdaptor.listTable().contains(tableName.getNameAsString());
+    }
+
+    @Override
+    public List<TableDescriptor> listTableDescriptors(Pattern pattern, boolean includeSysTables) throws IOException {
+        Preconditions.checkNotNull(pattern);
+
+        // Assuming listTables(Pattern pattern) is already implemented
+        return listTables(pattern);
     }
 
     @Override
@@ -150,6 +171,17 @@ public class TablestoreAdmin implements Admin {
     @Override
     public TableName[] listTableNames(String regex, boolean includeSysTables) throws IOException {
         return listTableNames(regex);
+    }
+
+    /*
+     * this will replace HTableDescriptor getTableDescriptor(TableName tableName)
+     */
+    public TableDescriptor getDescriptor(TableName tableName) throws IOException {
+        Preconditions.checkNotNull(tableName);
+
+        OTableDescriptor oTableDescriptor =  this.tablestoreAdaptor.describeTable(tableName.getNameAsString());
+        ColumnMapping columnMapping = new ColumnMapping(tableName.getNameAsString(), this.connection.getConfiguration());
+        return ElementConvertor.toHbaseTableDescriptor(oTableDescriptor, columnMapping);
     }
 
     @Override
@@ -248,10 +280,11 @@ public class TablestoreAdmin implements Admin {
     }
 
     @Override
-    public void enableTableAsync(TableName tableName) throws IOException {
+    public Future<Void> enableTableAsync(TableName tableName) throws IOException {
         Preconditions.checkNotNull(tableName);
 
         this.enableTable(tableName);
+        return null;
     }
 
     @Override
@@ -275,10 +308,26 @@ public class TablestoreAdmin implements Admin {
     }
 
     @Override
-    public void disableTableAsync(TableName tableName) throws IOException {
+    public Future<Void> disableTableAsync(TableName tableName) throws IOException {
         Preconditions.checkNotNull(tableName);
 
         disableTable(tableName);
+        return null;
+    }
+
+    @Override
+    public SpaceQuotaSnapshotView getCurrentSpaceQuotaSnapshot(String namespace) throws IOException {
+        throw new UnsupportedOperationException("getCurrentSpaceQuotaSnapshot");
+    }
+
+    @Override
+    public SpaceQuotaSnapshotView getCurrentSpaceQuotaSnapshot(TableName tableName) throws IOException {
+        throw new UnsupportedOperationException("getCurrentSpaceQuotaSnapshot");
+    }
+
+    @Override
+    public Map<TableName,? extends SpaceQuotaSnapshotView> getRegionServerSpaceQuotaSnapshots(ServerName serverName) throws IOException {
+        throw new UnsupportedOperationException("getRegionServerSpaceQuotaSnapshots");
     }
 
     @Override
@@ -399,73 +448,98 @@ public class TablestoreAdmin implements Admin {
     }
 
     @Override
+    public List<TableDescriptor> listTableDescriptors(Pattern pattern) throws IOException {
+        throw new UnsupportedOperationException("listTableDescriptors");
+    }
+
+    @Override
+    public List<LogEntry> getLogEntries(Set<ServerName> serverNames,
+                             String logType,
+                             ServerType serverType,
+                             int limit,
+                             Map<String,Object> filterParams
+    ) throws IOException {
+        throw new UnsupportedOperationException("getLogEntries");
+    }
+
+    @Override
+    public List<Boolean> clearSlowLogResponses(Set<ServerName> serverNames) throws IOException {
+        throw new UnsupportedOperationException("clearSlowLogResponses");
+    }
+
+    @Override
+    public void flushMasterStore() throws IOException {
+        log.info("flushMasterStore is a no-op");
+    }
+
+    @Override
     public void flush(TableName tableName) throws IOException {
-        Log.info("flush is a no-op");
+        log.info("flush is a no-op");
     }
 
     @Override
     public void flushRegion(byte[] regionName) throws IOException {
-        Log.info("flushRegion is a no-op");
+        log.info("flushRegion is a no-op");
     }
 
     @Override
     public void compact(TableName tableName) throws IOException {
-        Log.info("compact is a no-op");
+        log.info("compact is a no-op");
     }
 
     @Override
     public void compactRegion(byte[] regionName) throws IOException {
-        Log.info("compactRegion is a no-op");
+        log.info("compactRegion is a no-op");
     }
 
     @Override
     public void compact(TableName tableName, byte[] columnFamily) throws IOException {
-        Log.info("compact is a no-op");
+        log.info("compact is a no-op");
     }
 
     @Override
     public void compactRegion(byte[] regionName, byte[] columnFamily) throws IOException {
-        Log.info("compactRegion is a no-op");
+        log.info("compactRegion is a no-op");
     }
 
     @Override
     public void majorCompact(TableName tableName) throws IOException {
-        Log.info("majorCompact is a no-op");
+        log.info("majorCompact is a no-op");
     }
 
     @Override
     public void majorCompactRegion(byte[] regionName) throws IOException {
-        Log.info("majorCompactRegion is a no-op");
+        log.info("majorCompactRegion is a no-op");
     }
 
     @Override
     public void majorCompact(TableName tableName, byte[] columnFamily) throws IOException {
-        Log.info("majorCompact is a no-op");
+        log.info("majorCompact is a no-op");
     }
 
     @Override
     public void majorCompactRegion(byte[] regionName, byte[] columnFamily) throws IOException {
-        Log.info("majorCompactRegion is a no-op");
+        log.info("majorCompactRegion is a no-op");
     }
 
     @Override
     public void compactRegionServer(ServerName sn, boolean major) throws IOException, InterruptedException {
-        Log.info("compactRegionServer is a no-op");
+        log.info("compactRegionServer is a no-op");
     }
 
     @Override
     public void move(byte[] encodedRegionName, byte[] destServerName) throws IOException {
-        Log.info("move is a no-op");
+        log.info("move is a no-op");
     }
 
     @Override
     public void assign(byte[] regionName) throws IOException {
-        Log.info("assign is a no-op");
+        log.info("assign is a no-op");
     }
 
     @Override
     public void unassign(byte[] regionName, boolean force) throws IOException {
-        Log.info("unassign is a no-op");
+        log.info("unassign is a no-op");
     }
 
     @Override
@@ -480,7 +554,7 @@ public class TablestoreAdmin implements Admin {
 
     @Override
     public boolean balancer() throws IOException {
-        Log.info("balancer is a no-op");
+        log.info("balancer is a no-op");
         return true;
     }
 
@@ -521,27 +595,27 @@ public class TablestoreAdmin implements Admin {
 
     @Override
     public void mergeRegions(byte[] nameOfRegionA, byte[] nameOfRegionB, boolean forcible) throws IOException {
-        Log.info("mergeRegions is a no-op");
+        log.info("mergeRegions is a no-op");
     }
 
     @Override
     public void split(TableName tableName) throws IOException {
-        Log.info("split is a no-op");
+        log.info("split is a no-op");
     }
 
     @Override
     public void splitRegion(byte[] regionName) throws IOException {
-        Log.info("splitRegion is a no-op");
+        log.info("splitRegion is a no-op");
     }
 
     @Override
     public void split(TableName tableName, byte[] splitPoint) throws IOException {
-        Log.info("split is a no-op");
+        log.info("split is a no-op");
     }
 
     @Override
     public void splitRegion(byte[] regionName, byte[] splitPoint) throws IOException {
-        Log.info("splitRegion is a no-op");
+        log.info("splitRegion is a no-op");
     }
 
     @Override
@@ -645,6 +719,26 @@ public class TablestoreAdmin implements Admin {
     }
 
     @Override
+    public List<Boolean> hasUserPermissions(String userName, List<Permission> permissions) throws IOException {
+        throw new UnsupportedOperationException("hasUserPermissions");
+    }
+
+    @Override
+    public List<org.apache.hadoop.hbase.security.access.UserPermission> getUserPermissions(org.apache.hadoop.hbase.security.access.GetUserPermissionsRequest getUserPermissionsRequest) throws IOException {
+        throw new UnsupportedOperationException("getUserPermissions");
+    }
+
+    @Override
+    public void revoke(org.apache.hadoop.hbase.security.access.UserPermission userPermission) throws IOException {
+        throw new UnsupportedOperationException("revoke");
+    }
+
+    @Override
+    public void grant(org.apache.hadoop.hbase.security.access.UserPermission userPermission, boolean mergeExistingPermissions) throws IOException {
+        throw new UnsupportedOperationException("grant");
+    }
+
+    @Override
     public boolean abortProcedure(long procId, boolean mayInterruptIfRunning) throws IOException {
         throw new UnsupportedOperationException("abortProcedure");
     }
@@ -670,12 +764,17 @@ public class TablestoreAdmin implements Admin {
     }
 
     @Override
-    public AdminProtos.GetRegionInfoResponse.CompactionState getCompactionState(TableName tableName) throws IOException {
+    public CompactionState getCompactionState(TableName tableName) throws IOException {
         throw new UnsupportedOperationException("getCompactionState");
     }
 
     @Override
-    public AdminProtos.GetRegionInfoResponse.CompactionState getCompactionStateForRegion(byte[] regionName) throws IOException {
+    public CompactionState getCompactionState(TableName tableName, CompactType compactType) throws IOException {
+        throw new UnsupportedOperationException("getCompactionState");
+    }
+
+    @Override
+    public CompactionState getCompactionStateForRegion(byte[] regionName) throws IOException {
         throw new UnsupportedOperationException("getCompactionStateForRegion");
     }
 
@@ -687,6 +786,16 @@ public class TablestoreAdmin implements Admin {
     @Override
     public long getLastMajorCompactionTimestampForRegion(byte[] regionName) throws IOException {
         throw new UnsupportedOperationException("getLastMajorCompactionTimestampForRegion");
+    }
+
+    @Override
+    public boolean isSnapshotCleanupEnabled() throws IOException {
+        throw new UnsupportedOperationException("isSnapshotCleanupEnabled");
+    }
+
+    @Override
+    public boolean snapshotCleanupSwitch(boolean on, boolean asynchronous) throws IOException {
+        throw new UnsupportedOperationException("snapshotCleanupSwitch");
     }
 
     @Override
@@ -710,8 +819,8 @@ public class TablestoreAdmin implements Admin {
     }
 
     @Override
-    public MasterProtos.SnapshotResponse takeSnapshotAsync(HBaseProtos.SnapshotDescription snapshot) throws IOException {
-        throw new UnsupportedOperationException("takeSnapshotAsync");
+    public Future<Void> snapshotAsync(SnapshotDescription snapshot) throws IOException {
+        throw new UnsupportedOperationException("snapshotAsync");
     }
 
     @Override
@@ -765,17 +874,20 @@ public class TablestoreAdmin implements Admin {
     }
 
     @Override
-    public List<HBaseProtos.SnapshotDescription> listSnapshots() throws IOException {
+    public List<SnapshotDescription> listSnapshots() throws IOException {
         throw new UnsupportedOperationException("listSnapshots");
     }
 
-    @Override
-    public List<HBaseProtos.SnapshotDescription> listSnapshots(String regex) throws IOException {
-        throw new UnsupportedOperationException("listSnapshots");
-    }
+    /*
+     * deprecated
+     */
+    // @Override
+    // public List<SnapshotDescription> listSnapshots(String regex) throws IOException {
+    //     throw new UnsupportedOperationException("listSnapshots");
+    // }
 
     @Override
-    public List<HBaseProtos.SnapshotDescription> listSnapshots(Pattern pattern) throws IOException {
+    public List<SnapshotDescription> listSnapshots(Pattern pattern) throws IOException {
         throw new UnsupportedOperationException("listSnapshots");
     }
 
