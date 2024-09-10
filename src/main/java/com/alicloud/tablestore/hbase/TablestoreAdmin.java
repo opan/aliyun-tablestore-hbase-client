@@ -13,6 +13,7 @@ import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.LogEntry;
 import org.apache.hadoop.hbase.client.SnapshotDescription;
 import org.apache.hadoop.hbase.client.TableDescriptor;
+import org.apache.hadoop.hbase.client.TableDescriptorUtils;
 import org.apache.hadoop.hbase.client.security.SecurityCapability;
 import org.apache.hadoop.hbase.ipc.CoprocessorRpcChannel;
 import org.apache.hadoop.hbase.protobuf.generated.AdminProtos;
@@ -79,11 +80,36 @@ public class TablestoreAdmin implements Admin {
     }
 
     @Override
+    public List<TableDescriptor> listTableDescriptors() throws IOException {
+        List<String> tables = this.tablestoreAdaptor.listTable();
+        List<TableDescriptor> tableDescriptors = new ArrayList<TableDescriptor>();
+        for (int i = 0; i < tables.size(); i++) {
+            tableDescriptors.add(getDescriptor(TableName.valueOf(tables.get(i))));
+        }
+
+        return tableDescriptors;
+    }
+
+    @Override
     public List<TableDescriptor> listTableDescriptors(Pattern pattern, boolean includeSysTables) throws IOException {
         Preconditions.checkNotNull(pattern);
 
-        // Assuming listTables(Pattern pattern) is already implemented
-        return listTables(pattern);
+        return this.listTableDescriptors(pattern);
+    }
+
+    @Override
+    public List<TableDescriptor> listTableDescriptors(Pattern pattern) throws IOException {
+        Preconditions.checkNotNull(pattern);
+
+        List<String> tables = this.tablestoreAdaptor.listTable();
+        List<TableDescriptor> tableDescriptors = new ArrayList<TableDescriptor>();
+        for (int i = 0; i < tables.size(); i++) {
+            if (pattern.matcher(tables.get(i)).matches()) {
+                tableDescriptors.add(getTableDescriptor(TableName.valueOf(tables.get(i))));
+            }
+        }
+
+        return tableDescriptors;
     }
 
     @Override
@@ -447,10 +473,6 @@ public class TablestoreAdmin implements Admin {
         throw new UnsupportedOperationException("getOnlineRegions");
     }
 
-    @Override
-    public List<TableDescriptor> listTableDescriptors(Pattern pattern) throws IOException {
-        throw new UnsupportedOperationException("listTableDescriptors");
-    }
 
     @Override
     public List<LogEntry> getLogEntries(Set<ServerName> serverNames,
