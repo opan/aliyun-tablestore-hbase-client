@@ -7,6 +7,10 @@ import com.alicloud.tablestore.adaptor.struct.OTableDescriptor;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.*;
 import org.apache.hadoop.hbase.client.Admin;
+import org.apache.hadoop.hbase.client.ServerType;
+import org.apache.hadoop.hbase.client.ColumnFamilyDescriptor;
+import org.apache.hadoop.hbase.replication.ReplicationPeerDescription;
+// import org.apache.hadoop.hbase.ProcedureInfo;
 import org.apache.hadoop.hbase.client.CompactType;
 import org.apache.hadoop.hbase.client.CompactionState;
 import org.apache.hadoop.hbase.client.Connection;
@@ -25,6 +29,10 @@ import org.apache.hadoop.hbase.quotas.QuotaRetriever;
 import org.apache.hadoop.hbase.quotas.QuotaSettings;
 import org.apache.hadoop.hbase.quotas.SpaceQuotaSnapshotView;
 import org.apache.hadoop.hbase.security.access.Permission;
+import org.apache.hadoop.hbase.snapshot.HBaseSnapshotException;
+import org.apache.hadoop.hbase.snapshot.RestoreSnapshotException;
+import org.apache.hadoop.hbase.snapshot.SnapshotCreationException;
+import org.apache.hadoop.hbase.snapshot.UnknownSnapshotException;
 import org.apache.hadoop.hbase.util.Pair;
 // import org.mortbay.log.Log;
 import org.slf4j.Logger;
@@ -95,6 +103,11 @@ public class TablestoreAdmin implements Admin {
         Preconditions.checkNotNull(pattern);
 
         return this.listTableDescriptors(pattern);
+    }
+
+    @Override
+    public List<TableDescriptor> listTableDescriptors(List<TableName> tableNames) throws IOException {
+        return this.listTableDescriptors();
     }
 
     @Override
@@ -221,10 +234,10 @@ public class TablestoreAdmin implements Admin {
     }
 
     @Override
-    public void createTable(HTableDescriptor desc) throws IOException {
+    public void createTable(TableDescriptor desc) throws IOException {
         Preconditions.checkNotNull(desc);
 
-        Set<byte[]> familiesKeys = desc.getFamiliesKeys();
+        Set<byte[]> familiesKeys = desc.getColumnFamilyNames();
         if (familiesKeys.size() > 1) {
             throw new UnsupportedOperationException("Only support one family");
         }
@@ -232,31 +245,46 @@ public class TablestoreAdmin implements Admin {
         int maxVersion = 1;
         int ttl = Integer.MAX_VALUE;
         if (familiesKeys.size() == 1) {
-            HColumnDescriptor descriptor = desc.getFamily(familiesKeys.iterator().next());
+            ColumnFamilyDescriptor descriptor = desc.getColumnFamily(familiesKeys.iterator().next());
             if (descriptor.getMaxVersions() > 0) {
                 maxVersion = descriptor.getMaxVersions();
             }
 
             ttl = descriptor.getTimeToLive();
         }
-        OTableDescriptor tableDescriptor = new OTableDescriptor(desc.getNameAsString(), maxVersion, ttl);
+        OTableDescriptor tableDescriptor = new OTableDescriptor(desc.getTableName().getNameAsString(), maxVersion, ttl);
 
         this.tablestoreAdaptor.createTable(tableDescriptor);
     }
 
     @Override
-    public void createTable(HTableDescriptor desc, byte[] startKey, byte[] endKey, int numRegions) throws IOException {
+    public void createTable(TableDescriptor desc, byte[] startKey, byte[] endKey, int numRegions) throws IOException {
         throw new UnsupportedOperationException("createTable(HTableDescriptor desc, byte[] startKey, byte[] endKey, int numRegions)");
     }
 
     @Override
-    public void createTable(HTableDescriptor desc, byte[][] splitKeys) throws IOException {
+    public void createTable(TableDescriptor desc, byte[][] splitKeys) throws IOException {
         throw new UnsupportedOperationException("createTable(HTableDescriptor desc, byte[][] splitKeys)");
     }
 
     @Override
-    public void createTableAsync(HTableDescriptor desc, byte[][] splitKeys) throws IOException {
+    public Future<Void> createTableAsync(TableDescriptor desc) throws IOException {
         throw new UnsupportedOperationException("createTableAsync(HTableDescriptor desc, byte[][] splitKeys)");
+    }
+
+    @Override
+    public Future<Void> createTableAsync(TableDescriptor desc, byte[][] splitKeys) throws IOException {
+        throw new UnsupportedOperationException("createTableAsync(HTableDescriptor desc, byte[][] splitKeys)");
+    }
+
+    @Override
+    public boolean isRpcThrottleEnabled() throws IOException {
+        throw new UnsupportedOperationException("isRpcThrottleEnabled");
+    }
+
+    @Override
+    public boolean switchRpcThrottle(boolean enable) throws IOException {
+        throw new UnsupportedOperationException("switchRpcThrottle");
     }
 
     @Override
@@ -339,6 +367,16 @@ public class TablestoreAdmin implements Admin {
 
         disableTable(tableName);
         return null;
+    }
+
+    @Override
+    public Map<TableName, Long> getSpaceQuotaTableSizes() throws IOException {
+        throw new UnsupportedOperationException("getSpaceQuotaTableSizes");
+    }
+
+    @Override
+    public boolean exceedThrottleQuotaSwitch(boolean enable) throws IOException {
+        throw new UnsupportedOperationException("exceedThrottleQuotaSwitch");
     }
 
     @Override
@@ -427,9 +465,13 @@ public class TablestoreAdmin implements Admin {
         return new Pair<Integer, Integer>(0, 0);
     }
 
+    // @Override
+    // public void addColumn(TableName tableName, HColumnDescriptor column) throws IOException {
+    //     throw new UnsupportedOperationException("addColumn");
+    // }
     @Override
-    public void addColumn(TableName tableName, HColumnDescriptor column) throws IOException {
-        throw new UnsupportedOperationException("addColumn");
+    public void addColumnFamily(TableName tableName, ColumnFamilyDescriptor columnFamily) throws IOException {
+        throw new UnsupportedOperationException("addColumnFamily");
     }
 
     @Override
@@ -438,7 +480,7 @@ public class TablestoreAdmin implements Admin {
     }
 
     @Override
-    public void modifyColumn(TableName tableName, HColumnDescriptor descriptor) throws IOException {
+    public void modifyColumnFamily(TableName tableName, ColumnFamilyDescriptor descriptor) throws IOException {
         Preconditions.checkNotNull(tableName);
 
         int maxVersion = descriptor.getMaxVersions();
@@ -447,6 +489,17 @@ public class TablestoreAdmin implements Admin {
 
         this.tablestoreAdaptor.updateTable(tableDescriptor);
     }
+
+    // @Override
+    // public void modifyColumn(TableName tableName, HColumnDescriptor descriptor) throws IOException {
+    //     Preconditions.checkNotNull(tableName);
+
+    //     int maxVersion = descriptor.getMaxVersions();
+    //     int ttl = descriptor.getTimeToLive();
+    //     OTableDescriptor tableDescriptor = new OTableDescriptor(tableName.getNameAsString(), maxVersion, ttl);
+
+    //     this.tablestoreAdaptor.updateTable(tableDescriptor);
+    // }
 
     @Override
     public void closeRegion(String regionname, String serverName) throws IOException {
@@ -586,8 +639,18 @@ public class TablestoreAdmin implements Admin {
     }
 
     @Override
+    public List<ReplicationPeerDescription> listReplicationPeers() throws IOException {
+        
+    }
+
+    @Override
     public boolean normalize() throws IOException {
         throw new UnsupportedOperationException("normalize");
+    }
+
+    @Override
+    public boolean normalizerSwitch(boolean on) throws IOException {
+        throw new UnsupportedOperationException("normalizerSwitch");
     }
 
     @Override
@@ -641,7 +704,7 @@ public class TablestoreAdmin implements Admin {
     }
 
     @Override
-    public void modifyTable(TableName tableName, HTableDescriptor htd) throws IOException {
+    public void modifyTable(TableName tableName, TableDescriptor htd) throws IOException {
         throw new UnsupportedOperationException("modifyTable");
     }
 
@@ -693,6 +756,11 @@ public class TablestoreAdmin implements Admin {
     @Override
     public NamespaceDescriptor[] listNamespaceDescriptors() throws IOException {
         throw new UnsupportedOperationException("listNamespaceDescriptors");
+    }
+
+    @Override
+    public List<TableDescriptor> listTableDescriptorsByNamespace(byte[] name) throws IOException {
+        throw new UnsupportedOperationException("listTableDescriptorsByNamespace");
     }
 
     @Override
@@ -765,10 +833,10 @@ public class TablestoreAdmin implements Admin {
         throw new UnsupportedOperationException("abortProcedure");
     }
 
-    @Override
-    public ProcedureInfo[] listProcedures() throws IOException {
-        throw new UnsupportedOperationException("listProcedures");
-    }
+    // @Override
+    // public ProcedureInfo[] listProcedures() throws IOException {
+    //     throw new UnsupportedOperationException("listProcedures");
+    // }
 
     @Override
     public Future<Boolean> abortProcedureAsync(long procId, boolean mayInterruptIfRunning) throws IOException {
@@ -830,13 +898,13 @@ public class TablestoreAdmin implements Admin {
         throw new UnsupportedOperationException("snapshot");
     }
 
-    @Override
-    public void snapshot(String snapshotName, TableName tableName, HBaseProtos.SnapshotDescription.Type type) throws IOException, IllegalArgumentException {
-        throw new UnsupportedOperationException("snapshot");
-    }
+    // @Override
+    // public void snapshot(String snapshotName, TableName tableName, SnapshotDescription.Type type) throws IOException, IllegalArgumentException {
+    //     throw new UnsupportedOperationException("snapshot");
+    // }
 
     @Override
-    public void snapshot(HBaseProtos.SnapshotDescription snapshot) throws IOException, IllegalArgumentException {
+    public void snapshot(SnapshotDescription snapshot) throws IOException, SnapshotCreationException, IllegalArgumentException {
         throw new UnsupportedOperationException("snapshot");
     }
 
@@ -846,7 +914,7 @@ public class TablestoreAdmin implements Admin {
     }
 
     @Override
-    public boolean isSnapshotFinished(HBaseProtos.SnapshotDescription snapshot) throws IOException {
+    public boolean isSnapshotFinished(SnapshotDescription snapshot) throws IOException, HBaseSnapshotException, UnknownSnapshotException {
         throw new UnsupportedOperationException("isSnapshotFinished");
     }
 
@@ -856,7 +924,12 @@ public class TablestoreAdmin implements Admin {
     }
 
     @Override
-    public void restoreSnapshot(String snapshotName) throws IOException{
+    public void restoreSnapshot(String snapshotName) throws IOException, RestoreSnapshotException {
+        throw new UnsupportedOperationException("restoreSnapshot");
+    }
+
+    @Override
+    public void restoreSnapshot(String snapshotName, boolean takeFailSafeSnapshot, boolean restoreAcl) throws IOException, RestoreSnapshotException {
         throw new UnsupportedOperationException("restoreSnapshot");
     }
 
@@ -868,6 +941,11 @@ public class TablestoreAdmin implements Admin {
     @Override
     public void restoreSnapshot(String snapshotName, boolean takeFailSafeSnapshot) throws IOException {
         throw new UnsupportedOperationException("restoreSnapshot");
+    }
+
+    @Override
+    public void cloneTableSchema(TableName tableName, TableName newTableName, boolean preserveSplits) throws IOException {
+        throw new UnsupportedOperationException("cloneTableSchema");
     }
 
     @Override
