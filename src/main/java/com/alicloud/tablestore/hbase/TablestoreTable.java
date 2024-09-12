@@ -63,6 +63,18 @@ public class TablestoreTable implements Table {
         throw new UnsupportedOperationException("append");
     }
 
+    @Override
+    public TableDescriptor getDescriptor() throws IOException {
+        OTableDescriptor oTableDescriptor =  this.tablestoreAdaptor.describeTable(tableName.getNameAsString());
+        ColumnMapping columnMapping = new ColumnMapping(tableName.getNameAsString(), this.connection.getConfiguration());
+        return ElementConvertor.toHbaseTableDescriptor(oTableDescriptor, columnMapping);
+    }
+
+    @Override
+    public RegionLocator getRegionLocator() throws IOException {
+        return new TablestoreRegionLocator(this.connection, this.tableName);
+    }
+
     @Deprecated
     @Override
     public Object[] batch(List<? extends Row> actions) throws IOException,
