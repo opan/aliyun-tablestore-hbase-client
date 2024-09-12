@@ -669,8 +669,8 @@ public class TablestoreAdmin implements Admin {
     }
 
     @Override
-    public int runCatalogScan() throws IOException {
-        throw new UnsupportedOperationException("runCatalogScan");
+    public int runCatalogJanitor() throws IOException {
+        throw new UnsupportedOperationException("runCatalogJanitor");
     }
 
     @Override
@@ -706,6 +706,21 @@ public class TablestoreAdmin implements Admin {
     @Override
     public void modifyTable(TableName tableName, TableDescriptor htd) throws IOException {
         throw new UnsupportedOperationException("modifyTable");
+    }
+
+    @Override
+    public Future<Void> modifyTableAsync(TableDescriptor td) throws IOException {
+        throw new UnsupportedOperationException("modifyTableAsync");
+    }
+
+    @Override
+    public Future<Void> modifyTableAsync(TableDescriptor td, boolean bool) throws IOException {
+        throw new UnsupportedOperationException("modifyTableAsync");
+    }
+
+    @Override
+    public Future<Void> modifyTableAsync(TableName tableName, TableDescriptor td) throws IOException {
+        throw new UnsupportedOperationException("modifyTableAsync");
     }
 
     @Override
