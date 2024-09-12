@@ -4,22 +4,34 @@ import com.alicloud.openservices.tablestore.core.utils.Preconditions;
 import com.alicloud.tablestore.adaptor.client.OTSAdapter;
 import com.alicloud.tablestore.adaptor.client.TablestoreClientConf;
 import com.alicloud.tablestore.adaptor.struct.OTableDescriptor;
+import com.google.errorprone.annotations.OverridingMethodsMustInvokeSuper;
+import com.jcraft.jsch.IO;
+
+import org.apache.commons.configuration.tree.OverrideCombiner;
+import org.apache.hadoop.hbase.client.RegionInfo;
+import org.apache.commons.io.IOExceptionList;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.*;
 import org.apache.hadoop.hbase.client.Admin;
+import org.apache.hadoop.hbase.client.BalanceRequest;
+import org.apache.hadoop.hbase.client.BalanceResponse;
 import org.apache.hadoop.hbase.client.ServerType;
 import org.apache.hadoop.hbase.client.ColumnFamilyDescriptor;
+import org.apache.hadoop.hbase.replication.ReplicationPeerConfig;
 import org.apache.hadoop.hbase.replication.ReplicationPeerDescription;
 // import org.apache.hadoop.hbase.ProcedureInfo;
 import org.apache.hadoop.hbase.client.CompactType;
 import org.apache.hadoop.hbase.client.CompactionState;
 import org.apache.hadoop.hbase.client.Connection;
 import org.apache.hadoop.hbase.client.LogEntry;
+import org.apache.hadoop.hbase.client.NormalizeTableFilterParams;
 import org.apache.hadoop.hbase.client.SnapshotDescription;
 import org.apache.hadoop.hbase.client.TableDescriptor;
 import org.apache.hadoop.hbase.client.TableDescriptorUtils;
+import org.apache.hadoop.hbase.client.replication.TableCFs;
 import org.apache.hadoop.hbase.client.security.SecurityCapability;
 import org.apache.hadoop.hbase.ipc.CoprocessorRpcChannel;
+import org.apache.hadoop.hbase.ipc.UnsupportedCellCodecException;
 import org.apache.hadoop.hbase.protobuf.generated.AdminProtos;
 import org.apache.hadoop.hbase.protobuf.generated.HBaseProtos;
 import org.apache.hadoop.hbase.protobuf.generated.AccessControlProtos.GetUserPermissionsRequest;
@@ -288,6 +300,22 @@ public class TablestoreAdmin implements Admin {
     }
 
     @Override
+    public void deleteTableSnapshots(Pattern tableNamePattern, Pattern snapshotNamePattern) throws IOException {
+        throw new UnsupportedOperationException("deleteTableSnapshots");
+    }
+
+    @Override
+    public void deleteTableSnapshots(String tableNameRegex, String snapshotNameRegex) throws IOException {
+        throw new UnsupportedOperationException("deleteTableSnapshots");
+    }
+
+    @Override
+    public Future<Void> deleteTableAsync(TableName tableName) throws IOException {
+        this.deleteTable(tableName);
+        return null;
+    }
+
+    @Override
     public void deleteTable(TableName tableName) throws IOException {
         Preconditions.checkNotNull(tableName);
 
@@ -318,9 +346,20 @@ public class TablestoreAdmin implements Admin {
     public void truncateTable(TableName tableName, boolean preserveSplits) throws IOException {
         Preconditions.checkNotNull(tableName);
 
-        HTableDescriptor descriptor = getTableDescriptor(tableName);
+        TableDescriptor descriptor = getTableDescriptor(tableName);
         deleteTable(descriptor.getTableName());
         createTable(descriptor);
+    }
+
+    @Override
+    public Future<Void> truncateTableAsync(TableName tableName, boolean preserveSplits) throws IOException {
+        this.truncateTableAsync(tableName, preserveSplits);
+        return null;
+    }
+
+    @Override
+    public void enableTableReplication(TableName tableName) throws IOException {
+        throw new UnsupportedOperationException("enableTableReplication");
     }
 
     @Override
@@ -390,8 +429,43 @@ public class TablestoreAdmin implements Admin {
     }
 
     @Override
+    public List<RegionInfo> getRegions(ServerName serverName) throws IOException {
+        throw new UnsupportedOperationException("getRegions");
+    }
+
+    @Override
+    public List<RegionInfo> getRegions(TableName tableName) throws IOException {
+        throw new UnsupportedOperationException("getRegions");
+    }
+
+    @Override
+    public List<RegionMetrics> getRegionMetrics(ServerName serverName, TableName tableName) throws IOException {
+        throw new UnsupportedOperationException("getRegionMetrics");
+    }
+
+    @Override
+    public void recommissionRegionServer(ServerName server, List<byte[]> encodedRegionNames) throws IOException {
+        throw new UnsupportedOperationException("recommissionRegionServer");
+    }
+
+    @Override
+    public List<ServerName> listDecommissionedRegionServers() throws IOException {
+        throw new UnsupportedOperationException("listDecommissionedRegionServers");
+    }
+
+    @Override
+    public void decommissionRegionServers(List<ServerName> servers, boolean offload) throws IOException {
+        throw new UnsupportedOperationException("decommissionRegionServers");
+    }
+
+    @Override
     public Map<TableName,? extends SpaceQuotaSnapshotView> getRegionServerSpaceQuotaSnapshots(ServerName serverName) throws IOException {
         throw new UnsupportedOperationException("getRegionServerSpaceQuotaSnapshots");
+    }
+
+    @Override
+    public void disableTableReplication(TableName tableName) throws IOException {
+        throw new UnsupportedOperationException("disableTableReplication");
     }
 
     @Override
@@ -456,6 +530,16 @@ public class TablestoreAdmin implements Admin {
     }
 
     @Override
+    public void clearCompactionQueues(ServerName serverName, Set<String> queues) throws IOException, InterruptedException {
+        throw new UnsupportedOperationException("clearCompactionQueues");
+    }
+
+    @Override
+    public List<ServerName> clearDeadServers(List<ServerName> servers) throws IOException {
+        throw new UnsupportedOperationException("clearDeadServers");
+    }
+
+    @Override
     public Pair<Integer, Integer> getAlterStatus(TableName tableName) throws IOException {
         return new Pair<Integer, Integer>(0, 0);
     }
@@ -475,8 +559,23 @@ public class TablestoreAdmin implements Admin {
     }
 
     @Override
+    public Future<Void> addColumnFamilyAsync(TableName tableName, ColumnFamilyDescriptor columnFamily) throws IOException {
+        throw new UnsupportedOperationException("addColumnFamily");
+    }
+
+    @Override
     public void deleteColumn(TableName tableName, byte[] columnName) throws IOException {
         throw new UnsupportedOperationException("deleteColumn");
+    }
+
+    @Override
+    public Future<Void> deleteColumnFamilyAsync(TableName tableName, byte[] columnFamily) throws IOException {
+        throw new UnsupportedOperationException("deleteColumnFamilyAsync");
+    }
+
+    @Override
+    public Future<Void> modifyColumnFamilyStoreFileTrackerAsync(TableName tableName, byte[] family, String dstSFT) throws IOException {
+        throw new UnsupportedOperationException("modifyColumnFamilyStoreFileTrackerAsync");
     }
 
     @Override
@@ -488,6 +587,12 @@ public class TablestoreAdmin implements Admin {
         OTableDescriptor tableDescriptor = new OTableDescriptor(tableName.getNameAsString(), maxVersion, ttl);
 
         this.tablestoreAdaptor.updateTable(tableDescriptor);
+    }
+
+    @Override
+    public Future<Void> modifyColumnFamilyAsync(TableName tableName, ColumnFamilyDescriptor columnFamily) throws IOException {
+        this.modifyColumnFamily(tableName, columnFamily);
+        return null;
     }
 
     // @Override
@@ -526,6 +631,10 @@ public class TablestoreAdmin implements Admin {
         throw new UnsupportedOperationException("getOnlineRegions");
     }
 
+    @Override
+    public int getSyncWaitTimeout() {
+        return 0;
+    } 
 
     @Override
     public List<LogEntry> getLogEntries(Set<ServerName> serverNames,
@@ -553,12 +662,37 @@ public class TablestoreAdmin implements Admin {
     }
 
     @Override
+    public void flush(TableName tableName, byte[] columnFamily) throws IOException {
+        log.info("flush is a no-op");
+    }
+
+    @Override
     public void flushRegion(byte[] regionName) throws IOException {
         log.info("flushRegion is a no-op");
     }
 
     @Override
+    public void flushRegion(byte[] regionName, byte[] columnFamily) throws IOException {
+        log.info("flushRegion is a no-op");
+    }
+
+    @Override
+    public void flushRegionServer(ServerName serverName) throws IOException {
+        log.info("flushRegion is a no-op");
+    }
+
+    @Override
     public void compact(TableName tableName) throws IOException {
+        log.info("compact is a no-op");
+    }
+
+    @Override
+    public void compact(TableName tableName, byte[] columnFamily, CompactType compactType) throws IOException, InterruptedException {
+        log.info("compact is a no-op");
+    }
+
+    @Override
+    public void compact(TableName tableName, CompactType compactType) throws IOException, InterruptedException {
         log.info("compact is a no-op");
     }
 
@@ -578,7 +712,22 @@ public class TablestoreAdmin implements Admin {
     }
 
     @Override
+    public void compactRegionServer(ServerName serverName) throws IOException {
+        log.info("compactRegionServer is a no-op");
+    }
+
+    @Override
     public void majorCompact(TableName tableName) throws IOException {
+        log.info("majorCompact is a no-op");
+    }
+
+    @Override
+    public void majorCompact(TableName tableName, CompactType compactType) throws IOException {
+        log.info("majorCompact is a no-op");
+    }
+
+    @Override
+    public void majorCompact(TableName tableName, byte[] columnFamily, CompactType compactType) throws IOException {
         log.info("majorCompact is a no-op");
     }
 
@@ -598,12 +747,27 @@ public class TablestoreAdmin implements Admin {
     }
 
     @Override
+    public void majorCompactRegionServer(ServerName serverName) throws IOException {
+        log.info("majorCompactRegionServer is a no-op");
+    }
+
+    @Override
     public void compactRegionServer(ServerName sn, boolean major) throws IOException, InterruptedException {
         log.info("compactRegionServer is a no-op");
     }
 
     @Override
     public void move(byte[] encodedRegionName, byte[] destServerName) throws IOException {
+        log.info("move is a no-op");
+    }
+
+    @Override
+    public void move(byte[] encodedRegionName) throws IOException {
+        log.info("move is a no-op");
+    }
+
+    @Override
+    public void move(byte[] encodedRegionName, ServerName serverName) throws IOException {
         log.info("move is a no-op");
     }
 
@@ -618,6 +782,11 @@ public class TablestoreAdmin implements Admin {
     }
 
     @Override
+    public void unassign(byte[] regionName) throws IOException {
+        log.info("unassign is a no-op");
+    }
+
+    @Override
     public void offline(byte[] regionName) throws IOException {
         throw new UnsupportedOperationException("offline");
     }
@@ -625,6 +794,22 @@ public class TablestoreAdmin implements Admin {
     @Override
     public boolean setBalancerRunning(boolean on, boolean synchronous) throws IOException {
         return true;
+    }
+
+    @Override
+    public BalanceResponse balance(BalanceRequest balanceRequest) throws IOException {
+        throw new UnsupportedOperationException("balance");
+    }
+
+    @Override
+    public boolean balance() throws IOException {
+        log.info("balance is a no-op");
+        return true;
+    }
+
+    @Override
+    public boolean balancerSwitch(boolean onOrOff, boolean synchronous) throws IOException {
+        throw new UnsupportedOperationException("balancerSwitch");
     }
 
     @Override
@@ -639,12 +824,77 @@ public class TablestoreAdmin implements Admin {
     }
 
     @Override
+    public List<TableCFs> listReplicatedTableCFs() throws IOException {
+        throw new UnsupportedOperationException("listReplicatedTableCFs");
+    }
+
+    @Override
+    public void enableReplicationPeer(String peerId) throws IOException {
+        throw new UnsupportedOperationException("enableReplicationPeer");
+    }
+
+    @Override
+    public Future<Void> enableReplicationPeerAsync(String peerId) throws IOException {
+        throw new UnsupportedOperationException("enableReplicationPeerAsync");
+    }
+
+    @Override
+    public ReplicationPeerConfig getReplicationPeerConfig(String peerId) throws IOException {
+        throw new UnsupportedOperationException("getReplicationPeerConfig");
+    }
+
+    @Override
+    public Future<Void> removeReplicationPeerAsync(String peerId) throws IOException {
+        throw new UnsupportedOperationException("removeReplicationPeerAsync");
+    }
+
+    @Override
+    public void addReplicationPeer(String peerId, ReplicationPeerConfig peerConfig, boolean enabled) throws IOException {
+        throw new UnsupportedOperationException("addReplicationPeer");
+    }
+
+    @Override
+    public Future<Void> addReplicationPeerAsync(String peerId, ReplicationPeerConfig peerConfig, boolean enabled) throws IOException {
+        throw new UnsupportedOperationException("addReplicationPeerAsync");
+    }
+
+    @Override
+    public  void updateReplicationPeerConfig(String peerId, ReplicationPeerConfig peerConfig) throws IOException {
+        throw new UnsupportedOperationException("updateReplicationPeerConfig");
+    }
+
+    @Override
+    public Future<Void> updateReplicationPeerConfigAsync(String peerId, ReplicationPeerConfig peerConfig) throws IOException {
+        throw new UnsupportedOperationException("updateReplicationPeerConfig");
+    }
+
+    @Override
+    public Future<Void> disableReplicationPeerAsync(String peerId) throws IOException {
+        throw new UnsupportedOperationException("disableReplicationPeerAsync");
+    }
+
+    @Override
     public List<ReplicationPeerDescription> listReplicationPeers() throws IOException {
-        
+        throw new UnsupportedOperationException("listReplicationPeers");
+    }
+
+    @Override
+    public List<ReplicationPeerDescription> listReplicationPeers(Pattern pattern) throws IOException {
+        throw new UnsupportedOperationException("listReplicationPeers");
+    }
+
+    @Override
+    public String getProcedures() throws IOException {
+        throw new UnsupportedOperationException("getProcedures");
     }
 
     @Override
     public boolean normalize() throws IOException {
+        throw new UnsupportedOperationException("normalize");
+    }
+
+    @Override
+    public boolean normalize(NormalizeTableFilterParams ntfp) throws IOException {
         throw new UnsupportedOperationException("normalize");
     }
 
@@ -661,6 +911,21 @@ public class TablestoreAdmin implements Admin {
     @Override
     public boolean setNormalizerRunning(boolean on) throws IOException {
         throw new UnsupportedOperationException("setNormalizerRunning");
+    }
+
+    @Override
+    public boolean isSplitEnabled() throws IOException {
+        throw new UnsupportedOperationException("isSplitEnabled");
+    }
+
+    @Override
+    public boolean splitSwitch(boolean enabled, boolean synchronous) throws IOException {
+        throw new UnsupportedOperationException("splitSwitch");
+    }
+
+    @Override
+    public boolean catalogJanitorSwitch(boolean onOrOff) throws IOException {
+        throw new UnsupportedOperationException("catalogJanitorSwitch");
     }
 
     @Override
@@ -684,6 +949,26 @@ public class TablestoreAdmin implements Admin {
     }
 
     @Override
+    public Future<Void> mergeRegionsAsync(byte[][] nameofRegionsToMerge, boolean forcible) throws IOException {
+        throw new UnsupportedOperationException("mergeRegionsAsync");
+    }
+
+    @Override
+    public boolean isMergeEnabled() throws IOException {
+        throw new UnsupportedOperationException("isMasterInMaintenanceMode");
+    }
+
+    @Override
+    public boolean isCleanerChoreEnabled() throws IOException {
+        throw new UnsupportedOperationException("isCleanerChoreEnabled");
+    }
+
+    @Override
+    public boolean cleanerChoreSwitch(boolean onOrOff) throws IOException {
+        throw new UnsupportedOperationException("cleanerChoreSwitch");
+    }
+
+    @Override
     public void split(TableName tableName) throws IOException {
         log.info("split is a no-op");
     }
@@ -701,6 +986,21 @@ public class TablestoreAdmin implements Admin {
     @Override
     public void splitRegion(byte[] regionName, byte[] splitPoint) throws IOException {
         log.info("splitRegion is a no-op");
+    }
+
+    @Override
+    public Future<Void> splitRegionAsync(byte[] regionName) throws IOException {
+        throw new UnsupportedOperationException("splitRegionAsync");
+    }
+
+    @Override
+    public Future<Void> splitRegionAsync(byte[] regionName, byte[] splitPoint) throws IOException {
+        throw new UnsupportedOperationException("splitRegionAsync");
+    }
+
+    @Override
+    public Future<Void> modifyTableStoreFileTrackerAsync(TableName tableName, String dstSFT) throws IOException {
+        throw new UnsupportedOperationException("modifyTableStoreFileTrackerAsync");
     }
 
     @Override
@@ -729,6 +1029,11 @@ public class TablestoreAdmin implements Admin {
     }
 
     @Override
+    public boolean isMasterInMaintenanceMode() throws IOException {
+        throw new UnsupportedOperationException("isMasterInMaintenanceMode");
+    }
+
+    @Override
     public void stopMaster() throws IOException {
         throw new UnsupportedOperationException("stopMaster");
     }
@@ -744,8 +1049,28 @@ public class TablestoreAdmin implements Admin {
     }
 
     @Override
+    public ClusterMetrics getClusterMetrics() throws IOException {
+        throw new UnsupportedOperationException("getClusterMetrics");
+    }
+
+    @Override
+    public ClusterMetrics getClusterMetrics(EnumSet<ClusterMetrics.Option> options) throws IOException {
+        throw new UnsupportedOperationException("getClusterMetrics");
+    }
+
+    @Override
     public Configuration getConfiguration() {
         return connection.getConfiguration();
+    }
+
+    @Override
+    public String getLocks() throws IOException {
+        throw new UnsupportedOperationException("getLocks");
+    }
+
+    @Override
+    public CacheEvictionStats clearBlockCache(TableName tableName) throws IOException {
+        throw new UnsupportedOperationException("clearBlockCache");
     }
 
     @Override
@@ -754,13 +1079,28 @@ public class TablestoreAdmin implements Admin {
     }
 
     @Override
+    public Future<Void> createNamespaceAsync(NamespaceDescriptor descriptor) throws IOException {
+        throw new UnsupportedOperationException("createNamespaceAsync");
+    }
+
+    @Override
     public void modifyNamespace(NamespaceDescriptor descriptor) throws IOException {
         throw new UnsupportedOperationException("modifyNamespace");
     }
 
     @Override
+    public Future<Void> modifyNamespaceAsync(NamespaceDescriptor descriptor) throws IOException {
+        throw new UnsupportedOperationException("modifyNamespaceAsync");
+    }
+
+    @Override
     public void deleteNamespace(String name) throws IOException {
         throw new UnsupportedOperationException("deleteNamespace");
+    }
+
+    @Override
+    public Future<Void> deleteNamespaceAsync(String name) throws IOException {
+        throw new UnsupportedOperationException("deleteNamespaceAsync");
     }
 
     @Override
@@ -774,6 +1114,11 @@ public class TablestoreAdmin implements Admin {
     }
 
     @Override
+    public String[] listNamespaces() throws IOException {
+        throw new UnsupportedOperationException("listNamespaces");
+    }
+
+    @Override
     public List<TableDescriptor> listTableDescriptorsByNamespace(byte[] name) throws IOException {
         throw new UnsupportedOperationException("listTableDescriptorsByNamespace");
     }
@@ -782,6 +1127,23 @@ public class TablestoreAdmin implements Admin {
     public HTableDescriptor[] listTableDescriptorsByNamespace(String name) throws IOException {
         throw new UnsupportedOperationException("listTableDescriptorsByNamespace");
     }
+
+    @Deprecated
+    @Override
+    public List<SnapshotDescription> listTableSnapshots(String tableNameRegex, String snapshotNameRegex) throws IOException {
+        throw new UnsupportedOperationException("listTableSnapshots");
+    }
+
+    @Override
+    public List<SnapshotDescription> listTableSnapshots(Pattern tableNamePattern, Pattern snapshotNamePattern) throws IOException {
+        throw new UnsupportedOperationException("listTableSnapshots");
+    }
+
+    // @Deprecated
+    // @Override
+    // public HTableDescriptor[] listTableDescriptorsByNamespace(String name) throws IOException {
+    //     throw new UnsupportedOperationException("listTableDescriptorsByNamespace");
+    // }
 
     @Override
     public TableName[] listTableNamesByNamespace(String name) throws IOException {
@@ -869,6 +1231,16 @@ public class TablestoreAdmin implements Admin {
     }
 
     @Override
+    public boolean mergeSwitch(boolean enabled, boolean synchronous) throws IOException {
+        throw new UnsupportedOperationException("mergeSwitch");
+    }
+
+    @Override
+    public Map<ServerName,Boolean> compactionSwitch(boolean switchState, List<String> serverNamesList) throws IOException {
+        throw new UnsupportedOperationException("compactionSwitch");
+    }
+
+    @Override
     public CompactionState getCompactionState(TableName tableName) throws IOException {
         throw new UnsupportedOperationException("getCompactionState");
     }
@@ -933,6 +1305,12 @@ public class TablestoreAdmin implements Admin {
         throw new UnsupportedOperationException("isSnapshotFinished");
     }
 
+    @Deprecated
+    @Override
+    public Future<Void> restoreSnapshotAsync(String snapshotName) throws IOException, RestoreSnapshotException {
+        throw new UnsupportedOperationException("restoreSnapshotAsync");
+    }
+
     @Override
     public void restoreSnapshot(byte[] snapshotName) throws IOException {
         throw new UnsupportedOperationException("restoreSnapshot");
@@ -974,6 +1352,11 @@ public class TablestoreAdmin implements Admin {
     }
 
     @Override
+    public Future<Void> cloneSnapshotAsync(String snapshotName, TableName tableName, boolean restoreAcl, String customSFT) throws IOException, TableExistsException, RestoreSnapshotException {
+        throw new UnsupportedOperationException("cloneSnapshotAsync");
+    }
+
+    @Override
     public void execProcedure(String signature, String instance, Map<String, String> props) throws IOException {
         throw new UnsupportedOperationException("execProcedure");
     }
@@ -981,6 +1364,11 @@ public class TablestoreAdmin implements Admin {
     @Override
     public byte[] execProcedureWithRet(String signature, String instance, Map<String, String> props) throws IOException {
         throw new UnsupportedOperationException("execProcedureWithRet");
+    }
+
+    @Override
+    public byte[] execProcedureWithReturn(String signature, String instance, Map<String, String> props) throws IOException {
+        throw new UnsupportedOperationException("execProcedureWithReturn");
     }
 
     @Override
@@ -993,13 +1381,11 @@ public class TablestoreAdmin implements Admin {
         throw new UnsupportedOperationException("listSnapshots");
     }
 
-    /*
-     * deprecated
-     */
-    // @Override
-    // public List<SnapshotDescription> listSnapshots(String regex) throws IOException {
-    //     throw new UnsupportedOperationException("listSnapshots");
-    // }
+    @Deprecated
+    @Override
+    public List<SnapshotDescription> listSnapshots(String regex) throws IOException {
+        throw new UnsupportedOperationException("listSnapshots");
+    }
 
     @Override
     public List<SnapshotDescription> listSnapshots(Pattern pattern) throws IOException {
@@ -1034,6 +1420,16 @@ public class TablestoreAdmin implements Admin {
     @Override
     public QuotaRetriever getQuotaRetriever(QuotaFilter filter) throws IOException {
         throw new UnsupportedOperationException("getQuotaRetriever");
+    }
+
+    @Override
+    public List<QuotaSettings> getQuota(QuotaFilter filter) throws IOException {
+        throw new UnsupportedOperationException("getQuota");
+    }
+
+    @Override
+    public boolean runCleanerChore() throws IOException {
+        throw new UnsupportedOperationException("runCleanerChore");
     }
 
     @Override
