@@ -21,3 +21,10 @@
 - [迁移较早版本的HBase](https://help.aliyun.com/document_detail/50166.html)
 - [示例：HelloWorld](https://help.aliyun.com/document_detail/50163.html)
 
+
+## Compile
+
+```
+# skip compile and install test
+mvn install -Dmaven.test.skip=true
+```
