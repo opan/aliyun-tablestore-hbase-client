@@ -75,25 +75,24 @@ public class TablestoreTable implements Table {
         return new TablestoreRegionLocator(this.connection, this.tableName);
     }
 
-    @Deprecated
-    @Override
-    public Object[] batch(List<? extends Row> actions) throws IOException,
-            InterruptedException {
-        Object[] results = new Object[actions.size()];
-        batch(actions, results);
-        return results;
-    }
+    // @Deprecated
+    // @Override
+    // public Object[] batch(List<? extends Row> actions) throws IOException, InterruptedException {
+    //     Object[] results = new Object[actions.size()];
+    //     batch(actions, results);
+    //     return results;
+    // }
 
     @Override
     public <R> void batchCallback(List<? extends Row> actions, Object[] results, Batch.Callback<R> callback) throws IOException, InterruptedException {
         throw new UnsupportedOperationException("batchCallback");
     }
 
-    @Deprecated
-    @Override
-    public <R> Object[] batchCallback(List<? extends Row> actions, Batch.Callback<R> callback) throws IOException, InterruptedException {
-        throw new UnsupportedOperationException("batchCallback");
-    }
+    // @Deprecated
+    // @Override
+    // public <R> Object[] batchCallback(List<? extends Row> actions, Batch.Callback<R> callback) throws IOException, InterruptedException {
+    //     throw new UnsupportedOperationException("batchCallback");
+    // }
 
     @Override
     public void batch(List<? extends Row> actions, Object[] results)
@@ -300,11 +299,11 @@ public class TablestoreTable implements Table {
         return tableName;
     }
 
-    @Deprecated
-    @Override
-    public long getWriteBufferSize() {
-        return writeBufferSize;
-    }
+    // @Deprecated
+    // @Override
+    // public long getWriteBufferSize() {
+    //     return writeBufferSize;
+    // }
 
     @Override
     public Result increment(Increment increment) throws IOException {
@@ -323,9 +322,13 @@ public class TablestoreTable implements Table {
     }
 
     @Override
-    public void mutateRow(RowMutations rm) throws IOException {
+    public Result mutateRow(RowMutations rm) throws IOException {
         OUpdate oupdate = ElementConvertor.toOtsUpdate(rm, this.tablestoreColumnMapping);
         this.tablestoreAdaptor.update(tableNameStr, oupdate);
+
+        // not sure whether we should return the result
+        // returning empty result for now
+        return Result.EMPTY_RESULT;
     }
 
     @Override
@@ -401,11 +404,11 @@ public class TablestoreTable implements Table {
         }
     }
 
-    @Deprecated
-    @Override
-    public void setWriteBufferSize(long writeBufferSize) throws IOException {
-        this.writeBufferSize = writeBufferSize;
-    }
+    // @Deprecated
+    // @Override
+    // public void setWriteBufferSize(long writeBufferSize) throws IOException {
+    //     this.writeBufferSize = writeBufferSize;
+    // }
 
     @Override
     public <R extends Message> Map<byte[], R> batchCoprocessorService(Descriptors.MethodDescriptor methodDescriptor, Message request, byte[] startKey, byte[] endKey, R responsePrototype) throws ServiceException, Throwable {
