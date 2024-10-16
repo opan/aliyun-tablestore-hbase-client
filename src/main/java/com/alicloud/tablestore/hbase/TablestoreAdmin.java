@@ -2,7 +2,9 @@ package com.alicloud.tablestore.hbase;
 
 import com.alicloud.openservices.tablestore.core.utils.Preconditions;
 import com.alicloud.tablestore.adaptor.client.OTSAdapter;
+import com.alicloud.tablestore.adaptor.client.OTSConstants;
 import com.alicloud.tablestore.adaptor.client.TablestoreClientConf;
+import com.alicloud.tablestore.adaptor.client.util.OTSUtil;
 import com.alicloud.tablestore.adaptor.struct.OTableDescriptor;
 import com.google.errorprone.annotations.OverridingMethodsMustInvokeSuper;
 import com.jcraft.jsch.IO;
@@ -257,12 +259,17 @@ public class TablestoreAdmin implements Admin {
         int maxVersion = 1;
         int ttl = Integer.MAX_VALUE;
         if (familiesKeys.size() == 1) {
-            ColumnFamilyDescriptor descriptor = desc.getColumnFamily(familiesKeys.iterator().next());
-            if (descriptor.getMaxVersions() > 0) {
-                maxVersion = descriptor.getMaxVersions();
+            byte[] familyName = familiesKeys.iterator().next();
+            ColumnFamilyDescriptor columnFamilydescriptor = desc.getColumnFamily(familyName);
+            if (columnFamilydescriptor.getMaxVersions() > 0) {
+                maxVersion = columnFamilydescriptor.getMaxVersions();
             }
 
-            ttl = descriptor.getTimeToLive();
+            ttl = columnFamilydescriptor.getTimeToLive();
+
+            this.connection.getConfiguration().set(
+                    OTSConstants.GLOBAL_FAMILY_CONF_KEY + "." + desc.getTableName().getNameAsString(),
+                    columnFamilydescriptor.getNameAsString());
         }
         OTableDescriptor tableDescriptor = new OTableDescriptor(desc.getTableName().getNameAsString(), maxVersion, ttl);
 
@@ -549,10 +556,6 @@ public class TablestoreAdmin implements Admin {
         return new Pair<Integer, Integer>(0, 0);
     }
 
-    // @Override
-    // public void addColumn(TableName tableName, HColumnDescriptor column) throws IOException {
-    //     throw new UnsupportedOperationException("addColumn");
-    // }
     @Override
     public void addColumnFamily(TableName tableName, ColumnFamilyDescriptor columnFamily) throws IOException {
         throw new UnsupportedOperationException("addColumnFamily");
@@ -634,7 +637,7 @@ public class TablestoreAdmin implements Admin {
     @Override
     public int getSyncWaitTimeout() {
         return 0;
-    } 
+    }
 
     @Override
     public List<LogEntry> getLogEntries(Set<ServerName> serverNames,

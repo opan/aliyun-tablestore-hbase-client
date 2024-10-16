@@ -82,7 +82,7 @@ public class TestAdmin {
 
         // check family name
         ColumnMapping columnMapping = new ColumnMapping(tableName, admin.getConfiguration());
-        assertEquals(Bytes.toString(columnMapping.getFamilyNameBytes()), Bytes.toString(columnDescriptor.getName()));
+        assertEquals(Bytes.toStringHex(columnMapping.getFamilyNameBytes()), Bytes.toStringHex(columnDescriptor.getName()));
     }
 
     @Test
@@ -92,7 +92,7 @@ public class TestAdmin {
         ColumnMapping columnMapping = new ColumnMapping(tableName, admin.getConfiguration());
         {
             HTableDescriptor descriptor = new HTableDescriptor(TableName.valueOf(tableName));
-            HColumnDescriptor columnDescriptor = new HColumnDescriptor(Bytes.toString(columnMapping.getFamilyNameBytes()));
+            HColumnDescriptor columnDescriptor = new HColumnDescriptor(Bytes.toStringHex(columnMapping.getFamilyNameBytes()));
             columnDescriptor.setMaxVersions(10);
             descriptor.addFamily(columnDescriptor);
             admin.createTable(descriptor);
@@ -111,7 +111,7 @@ public class TestAdmin {
         assertTrue(columnDescriptor.isBlockCacheEnabled());
 
         // check family name
-        assertEquals(Bytes.toString(columnMapping.getFamilyNameBytes()), Bytes.toString(columnDescriptor.getName()));
+        assertEquals(Bytes.toStringHex(columnMapping.getFamilyNameBytes()), Bytes.toStringHex(columnDescriptor.getName()));
     }
 
     @Test
@@ -121,7 +121,7 @@ public class TestAdmin {
         ColumnMapping columnMapping = new ColumnMapping(tableName, admin.getConfiguration());
         {
             HTableDescriptor descriptor = new HTableDescriptor(TableName.valueOf(tableName));
-            HColumnDescriptor columnDescriptor = new HColumnDescriptor(Bytes.toString(columnMapping.getFamilyNameBytes()));
+            HColumnDescriptor columnDescriptor = new HColumnDescriptor(Bytes.toStringHex(columnMapping.getFamilyNameBytes()));
             columnDescriptor.setTimeToLive(86401);
             descriptor.addFamily(columnDescriptor);
             admin.createTable(descriptor);
@@ -140,7 +140,7 @@ public class TestAdmin {
         assertTrue(columnDescriptor.isBlockCacheEnabled());
 
         // check family name
-        assertEquals(Bytes.toString(columnMapping.getFamilyNameBytes()), Bytes.toString(columnDescriptor.getName()));
+        assertEquals(Bytes.toStringHex(columnMapping.getFamilyNameBytes()), Bytes.toStringHex(columnDescriptor.getName()));
     }
 
     @Test
@@ -401,7 +401,7 @@ public class TestAdmin {
             assertTrue(columnDescriptor.isBlockCacheEnabled());
 
             // check family name
-            assertEquals(Bytes.toString(columnMapping.getFamilyNameBytes()), Bytes.toString(columnDescriptor.getName()));
+            assertEquals(Bytes.toStringHex(columnMapping.getFamilyNameBytes()), Bytes.toStringHex(columnDescriptor.getName()));
         }
 
         // update table
@@ -428,7 +428,7 @@ public class TestAdmin {
             assertTrue(columnDescriptor.isBlockCacheEnabled());
 
             // check family name
-            assertEquals(Bytes.toString(columnMapping.getFamilyNameBytes()), Bytes.toString(columnDescriptor.getName()));
+            assertEquals(Bytes.toStringHex(columnMapping.getFamilyNameBytes()), Bytes.toStringHex(columnDescriptor.getName()));
         }
     }
 

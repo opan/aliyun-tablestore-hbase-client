@@ -11,6 +11,8 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
 
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.junit.Test;
 
 public class TestMultiOtsAdapterInstances {
@@ -50,6 +52,7 @@ public class TestMultiOtsAdapterInstances {
   }
 
   private TablestoreClientConf getHcsClientConf() {
+    Configuration hbaseConf = HBaseConfiguration.create();
     TablestoreClientConf conf = new TablestoreClientConf();
     return conf;
   }

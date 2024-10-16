@@ -269,8 +269,8 @@ public class TablestoreTable implements Table {
         }
         OScan oscan = ElementConvertor.toOtsScan(scan,
                 this.tablestoreColumnMapping);
-        OResultScanner oscanner = this.tablestoreAdaptor.getScanner(tableNameStr, oscan);
-        return new Scanner(oscanner, this.tablestoreColumnMapping);
+        OResultScanner oScanner = this.tablestoreAdaptor.getScanner(tableNameStr, oscan);
+        return new Scanner(oScanner, this.tablestoreColumnMapping);
     }
 
     @Override

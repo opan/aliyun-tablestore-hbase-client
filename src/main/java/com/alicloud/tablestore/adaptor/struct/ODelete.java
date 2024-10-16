@@ -13,6 +13,7 @@ import com.alicloud.openservices.tablestore.model.RowUpdateChange;
 import com.alicloud.tablestore.adaptor.client.OTSConstants;
 import com.alicloud.tablestore.adaptor.client.util.Bytes;
 import com.alicloud.tablestore.adaptor.client.util.OTSUtil;
+import com.alicloud.tablestore.hbase.ColumnMapping;
 
 public class ODelete extends OMutation implements Comparable<ORow> {
 
@@ -42,7 +43,7 @@ public class ODelete extends OMutation implements Comparable<ORow> {
    */
   public ODelete deleteColumns(byte[] qualifier) {
     this.keyValues.add(new OColumnValue(this.row, qualifier, OTSConstants.LATEST_TIMESTAMP,
-        OColumnValue.Type.DELETE_ALL, null));
+            OColumnValue.Type.DELETE_ALL, null));
     return this;
   }
 
@@ -71,9 +72,9 @@ public class ODelete extends OMutation implements Comparable<ORow> {
       RowUpdateChange ruc = new RowUpdateChange(tableName, primaryKey);
       for (com.alicloud.tablestore.adaptor.struct.OColumnValue kv : keyValues) {
         if (kv.getType() == com.alicloud.tablestore.adaptor.struct.OColumnValue.Type.DELETE) {
-          ruc.deleteColumn(Bytes.toString(kv.getQualifier()), kv.getTimestamp());
+          ruc.deleteColumn(ColumnMapping.getTablestoreColumnName(kv.getQualifier()), kv.getTimestamp());
         } else if (kv.getType() == com.alicloud.tablestore.adaptor.struct.OColumnValue.Type.DELETE_ALL) {
-          ruc.deleteColumns(Bytes.toString(kv.getQualifier()));
+          ruc.deleteColumns(ColumnMapping.getTablestoreColumnName(kv.getQualifier()));
         }
       }
       ruc.setCondition(getCondition());

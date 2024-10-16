@@ -35,6 +35,16 @@ public class TablestoreConnection implements Connection {
         this.tablestoreConf = loadOtsConf(conf);
     }
 
+    public TablestoreConnection(Configuration conf, ExecutorService pool, User user) {
+        this(conf, pool, user, null);
+    }
+
+    public TablestoreConnection(Configuration conf, ExecutorService pool, User user, Map<String, byte[]> connectionAttributes) {
+        this.hbaseConf = conf;
+        this.closed = false;
+        this.tablestoreConf = loadOtsConf(conf);
+    }
+
     @Override
     public Configuration getConfiguration() {
         return this.hbaseConf;

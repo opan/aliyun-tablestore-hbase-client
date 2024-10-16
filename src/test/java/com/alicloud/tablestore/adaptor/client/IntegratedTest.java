@@ -25,6 +25,8 @@ import com.alicloud.tablestore.adaptor.client.util.Bytes;
 import com.alicloud.tablestore.adaptor.filter.OSingleColumnValueFilter;
 import com.alicloud.tablestore.adaptor.filter.OSingleColumnValueFilter.OCompareOp;
 import com.alicloud.tablestore.adaptor.struct.*;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HBaseConfiguration;
 
 public class IntegratedTest {
   public static final Log LOG = LogFactory.getLog(IntegratedTest.class);
@@ -54,6 +56,7 @@ public class IntegratedTest {
   }
 
   public IntegratedTest() {
+    Configuration hbaseConf = HBaseConfiguration.create();
     TablestoreClientConf conf = new TablestoreClientConf();
     conf.setOTSEndpoint(endpoint);
     conf.setTablestoreAccessKeyId(accessId);

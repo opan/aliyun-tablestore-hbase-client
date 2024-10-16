@@ -6,6 +6,8 @@ import com.alicloud.tablestore.adaptor.client.TablestoreClientConf;
 import com.alicloud.tablestore.adaptor.client.util.Bytes;
 import com.alicloud.tablestore.adaptor.filter.OSingleColumnValueFilter;
 import com.alicloud.tablestore.adaptor.struct.*;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HBaseConfiguration;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -45,6 +47,7 @@ public class AdaptorSample {
   }
 
   public AdaptorSample() {
+    Configuration hbaseConf = HBaseConfiguration.create();
     TablestoreClientConf conf = new TablestoreClientConf();
     conf.setOTSEndpoint(endpoint);
     conf.setTablestoreAccessKeyId(accessId);

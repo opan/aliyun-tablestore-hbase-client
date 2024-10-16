@@ -25,6 +25,17 @@
             <groupId>com.aliyun.openservices</groupId>
             <artifactId>tablestore</artifactId>
             <version>5.17.4</version>
+            <classifier>jar-with-dependencies</classifier>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.google.protobuf</groupId>
+                    <artifactId>protobuf-java</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.apache.httpcomponents</groupId>
+                    <artifactId>httpasyncclient</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.apache.hbase</groupId>
@@ -46,6 +57,14 @@
             <artifactId>slf4j-simple</artifactId>
             <version>1.7.36</version>
         </dependency> -->
+
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.13.2</version>
+            <scope>test</scope>
+        </dependency>
+
     </dependencies>
 
 </project>

@@ -15,6 +15,8 @@ import com.alicloud.openservices.tablestore.TableStoreException;
 import com.alicloud.openservices.tablestore.model.*;
 import com.alicloud.tablestore.adaptor.client.util.Bytes;
 import com.alicloud.tablestore.adaptor.struct.*;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HBaseConfiguration;
 
 public class PerformanceTest {
   private static String endpoint = "";
@@ -62,6 +64,7 @@ public class PerformanceTest {
   }
 
   private OTSAdapter getOTSAdapter() {
+    Configuration hbaseConf = HBaseConfiguration.create();
     TablestoreClientConf conf = new TablestoreClientConf();
     conf.setOTSEndpoint(endpoint);
     conf.setTablestoreAccessKeyId(accessId);

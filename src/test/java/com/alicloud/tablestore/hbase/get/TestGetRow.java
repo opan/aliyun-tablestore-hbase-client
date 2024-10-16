@@ -42,6 +42,7 @@ public class TestGetRow {
         ResultScanner scanResult = table.getScanner(scan);
 
         for (Result row : scanResult) {
+            if (row.getRow() == null) continue;
             Delete delete = new Delete(row.getRow());
             table.delete(delete);
         }
@@ -348,7 +349,7 @@ public class TestGetRow {
         table.get(get);
     }
 
-    @Test(expected=UnsupportedOperationException.class)
+    @Test
     public void testGetRowWithClosestRowBefore() throws IOException {
         clean();
         byte[] rowKey = Bytes.toBytes(rowPrefix + 0);
@@ -363,7 +364,9 @@ public class TestGetRow {
 
         Get get = new Get(rowKey);
         get.setClosestRowBefore(true);
-        table.get(get);
+        Result result = table.get(get);
+        String value = Bytes.toString(result.getValue(familyName, columnName));
+        assertEquals("col_1_var", value);
     }
 
     @Test

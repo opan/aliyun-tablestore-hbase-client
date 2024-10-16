@@ -18,6 +18,8 @@ import com.alicloud.openservices.tablestore.model.RowUpdateChange;
 import com.alicloud.tablestore.adaptor.client.OTSConstants;
 import com.alicloud.tablestore.adaptor.client.util.Bytes;
 import com.alicloud.tablestore.adaptor.client.util.OTSUtil;
+import com.alicloud.tablestore.hbase.ColumnMapping;
+import org.apache.hadoop.hbase.util.EnvironmentEdgeManager;
 
 public class OPut extends OMutation implements Comparable<ORow> {
 
@@ -209,7 +211,7 @@ public class OPut extends OMutation implements Comparable<ORow> {
    * Returns a list of all KeyValue objects with matching column family and qualifier.
    * @param qualifier column qualifier
    * @return a list of KeyValue objects with the matching family and qualifier, returns an empty
-   *         list if one doesnt exist for the given family.
+   *         list if one doesn't exist for the given family.
    */
   public List<com.alicloud.tablestore.adaptor.struct.OColumnValue> get(byte[] qualifier) {
     List<com.alicloud.tablestore.adaptor.struct.OColumnValue> filteredList = new ArrayList<com.alicloud.tablestore.adaptor.struct.OColumnValue>();
@@ -222,9 +224,9 @@ public class OPut extends OMutation implements Comparable<ORow> {
   }
 
   /**
-   * Creates an empty list if one doesnt exist for the given column family or else it returns the
+   * Creates an empty list if one doesn't exist for the given column family or else it returns the
    * associated list of KeyValue objects.
-   * @return a list of KeyValue objects, returns an empty list if one doesnt exist.
+   * @return a list of KeyValue objects, returns an empty list if one doesn't exist.
    */
   public List<com.alicloud.tablestore.adaptor.struct.OColumnValue> getKeyValueList() {
     return this.keyValues;
@@ -252,9 +254,9 @@ public class OPut extends OMutation implements Comparable<ORow> {
     for (com.alicloud.tablestore.adaptor.struct.OColumnValue kv : keyValues) {
       Column column = null;
       if (kv.getTimestamp() == OTSConstants.LATEST_TIMESTAMP) {
-        column = new Column(Bytes.toString(kv.getQualifier()), ColumnValue.fromBinary(kv.getValue()));
+        column = new Column(ColumnMapping.getTablestoreColumnName(kv.getQualifier()), ColumnValue.fromBinary(kv.getValue()));
       } else {
-        column = new Column(Bytes.toString(kv.getQualifier()), ColumnValue.fromBinary(kv.getValue()),
+        column = new Column(ColumnMapping.getTablestoreColumnName(kv.getQualifier()), ColumnValue.fromBinary(kv.getValue()),
                 kv.getTimestamp());
       }
       ruc.put(column);

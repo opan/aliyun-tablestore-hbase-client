@@ -2,6 +2,7 @@ package com.alicloud.tablestore.adaptor.struct;
 
 import com.alicloud.openservices.tablestore.model.SingleRowQueryCriteria;
 import com.alicloud.openservices.tablestore.model.filter.SingleColumnValueFilter;
+import com.alicloud.tablestore.adaptor.client.util.Bytes;
 import com.alicloud.tablestore.adaptor.struct.OGet;
 import com.alicloud.tablestore.adaptor.client.OTSConstants;
 import com.alicloud.tablestore.adaptor.filter.OSingleColumnValueFilter;
@@ -9,7 +10,6 @@ import org.junit.Test;
 
 import java.io.IOException;
 
-import org.apache.hadoop.hbase.util.Bytes;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
@@ -45,7 +45,7 @@ public class TestOGet {
     assertEquals(3, criteria.getMaxVersions());
     assertEquals(10, criteria.getTimeRange().getStart());
     assertEquals(100, criteria.getTimeRange().getEnd());
-    assertEquals(Bytes.toString(QUALIFIER), ((SingleColumnValueFilter) criteria.getFilter()).getColumnName());
+    assertEquals(Bytes.toStringHex(QUALIFIER), ((SingleColumnValueFilter) criteria.getFilter()).getColumnName());
     assertEquals(SingleColumnValueFilter.CompareOperator.EQUAL,
             ((SingleColumnValueFilter)criteria.getFilter()).getOperator());
     assertEquals(0, ((SingleColumnValueFilter) criteria.getFilter()).getColumnValue().asBinary().length);
